@@ -10,7 +10,7 @@ set -euo pipefail
 [ $# -ge 1 ] || { sed -n '2,7p' "$0" >&2; exit 2; }
 DIR=$(cd "$1" && pwd); shift
 HERE=$(cd "$(dirname "$0")" && pwd)
-IMG=readiness-php:8.4
+IMG=kairos-php:8.4
 
 [ -f "$DIR/composer.json" ] || { echo "no composer.json in $DIR" >&2; exit 1; }
 case $DIR in "$HOME"/*) ;; *) echo "warning: $DIR is outside \$HOME, Docker may refuse to mount it" >&2 ;; esac

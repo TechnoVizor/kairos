@@ -6,8 +6,8 @@
 #   <repo>   path to a git checkout
 #   --ref    what to scan (default origin/main, falls back to HEAD); scanned from `git archive`,
 #            so uncommitted work and gitignored files are never touched
-#   --out    where JSON/text results go (default $TMPDIR/readiness-scan/<repo>)
-#   --keep   keep the export copy under ~/.cache/readiness-test/<repo>
+#   --out    where JSON/text results go (default $TMPDIR/kairos-scan/<repo>)
+#   --keep   keep the export copy under ~/.cache/kairos/<repo>
 set -euo pipefail
 exec 3>&2  # fd 3 = the terminal, so progress never lands in a tool's redirected output
 
@@ -24,7 +24,7 @@ done
 [ -n "$REPO" ] || { echo "usage: scan.sh <repo> [--ref R] [--out DIR] [--keep]" >&2; exit 2; }
 REPO=$(cd "$REPO" && pwd)
 NAME=$(basename "$REPO")
-OUT=${OUT:-${TMPDIR:-/tmp}/readiness-scan/$NAME}
+OUT=${OUT:-${TMPDIR:-/tmp}/kairos-scan/$NAME}
 HERE=$(cd "$(dirname "$0")" && pwd)
 
 command -v docker >/dev/null && docker info >/dev/null 2>&1 || { echo "docker is not running" >&2; exit 1; }
@@ -34,7 +34,7 @@ git -C "$REPO" fetch --quiet origin 2>/dev/null || true
 git -C "$REPO" rev-parse --verify --quiet "$REF" >/dev/null || { echo "ref $REF not found, using HEAD" >&2; REF=HEAD; }
 
 # Docker may only mount paths under $HOME (not /tmp) on some setups, so the export lives there.
-WORK=$HOME/.cache/readiness-test/$NAME
+WORK=$HOME/.cache/kairos/$NAME
 rm -rf "$WORK"; mkdir -p "$WORK" "$OUT"
 [ "$KEEP" = 1 ] || trap 'rm -rf "$WORK"' EXIT
 git -C "$REPO" archive "$REF" | tar -x -C "$WORK"
@@ -65,7 +65,7 @@ step semgrep docker run --rm --user "$ME" -e HOME=/tmp -v "$WORK":/src:ro semgre
   $packs --metrics=off --json --quiet --exclude node_modules --exclude vendor --exclude '*.min.js' /src \
   > "$OUT/semgrep.json" 2> "$OUT/semgrep.log"
 
-step trivy docker run --rm -v readiness-trivy-cache:/root/.cache -v "$WORK":/src:ro aquasec/trivy:latest fs \
+step trivy docker run --rm -v kairos-trivy-cache:/root/.cache -v "$WORK":/src:ro aquasec/trivy:latest fs \
   --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --format json --quiet /src \
   > "$OUT/trivy.json" 2> "$OUT/trivy.log"
 

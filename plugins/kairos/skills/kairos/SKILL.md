@@ -1,9 +1,11 @@
 ---
-name: project-readiness-test
-description: Use when the user asks to check, test or rate a finished project's readiness and security ("тест готового проекта", "насколько проект готов"), run an audit or health check, or get a security score for one or several repos.
+name: kairos
+description: Use when the user asks to check, test or rate a finished project's readiness and security ("тест готового проекта", "насколько проект готов"), run an audit or health check, get a security score for one or several repos, or mentions Kairos.
 ---
 
-# Project Readiness Test
+# Kairos
+
+*Kairos (καιρός): the opportune moment to ship.*
 
 Read-only audit that ends in one weighted score. Report in the user's language. Fix nothing unless asked; end with one line offering fixes. `<skill-dir>` below is the "Base directory for this skill" shown when this skill loads.
 
@@ -12,7 +14,7 @@ Read-only audit that ends in one weighted score. Report in the user's language. 
 - An export lacks gitignored build output: Laravel+Vite view tests need `public/build` (copy it from a clean checkout at the same commit), Nuxt needs `npx nuxt prepare`. Mass failures right after an export are an export artifact, not code.
 - Never point tests at a real DB. Laravel: phpunit's sqlite `:memory:`. Go/Postgres: throwaway container with its own name and port, removed at the end (some suites drop the `public` schema).
 - Prod: GET/HEAD/OPTIONS on public URLs only. No POST, no logins, no fuzzing.
-- Containers get code read-only, nothing is uploaded, secrets stay redacted. Docker may mount only under `$HOME`: exports go to `~/.cache/readiness-test/<repo>`, delete them at the end.
+- Containers get code read-only, nothing is uploaded, secrets stay redacted. Docker may mount only under `$HOME`: exports go to `~/.cache/kairos/<repo>`, delete them at the end.
 - Absolute paths; no parallel calls that `cd`; never `pkill -f <text in your own command>`. Slow runs go to the background, output to the scratchpad.
 
 ## Steps

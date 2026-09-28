@@ -1,4 +1,6 @@
-# Project Readiness Test
+# Kairos
+
+*Kairos (καιρός) is the Greek word for the opportune moment. The right moment to ship is when the project is ready and safe.*
 
 A [Claude Code](https://code.claude.com) skill that audits a finished project and answers one question:
 **how ready and how secure is it, in numbers?**
@@ -39,8 +41,8 @@ A criterion that cannot be audited is dropped and the weights are renormalized.
 The repository is a Claude Code plugin marketplace. Two commands:
 
 ```bash
-claude plugin marketplace add TechnoVizor/project-readiness-test
-claude plugin install project-readiness-test@project-readiness-test
+claude plugin marketplace add TechnoVizor/kairos
+claude plugin install kairos@kairos
 ```
 
 While the repository is private, the owner must add you as a collaborator first, and you need to be signed in
@@ -49,7 +51,7 @@ with `gh auth login` (or have git credentials for GitHub).
 No marketplace? Copy the skill folder instead:
 
 ```bash
-cp -r plugins/project-readiness-test/skills/project-readiness-test ~/.claude/skills/
+cp -r plugins/kairos/skills/kairos ~/.claude/skills/
 ```
 
 Restart Claude Code (or run `/reload-plugins`) after installing.
@@ -65,7 +67,7 @@ Restart Claude Code (or run `/reload-plugins`) after installing.
 
 Ask in plain language:
 
-> Run the project readiness test on `~/repos/my-app`
+> Run Kairos on `~/repos/my-app`
 
 > Rate how ready and secure these three repos are and compare them.
 
@@ -75,10 +77,10 @@ The two helper scripts also work on their own:
 
 ```bash
 # gitleaks (full history) + Semgrep + Trivy + zizmor, summarized
-bash plugins/project-readiness-test/skills/project-readiness-test/scripts/scan.sh ~/repos/my-app
+bash plugins/kairos/skills/kairos/scripts/scan.sh ~/repos/my-app
 
 # PHP coverage inside a throwaway image with pcov and GD (pass an export, not a working checkout)
-bash plugins/project-readiness-test/skills/project-readiness-test/scripts/php-coverage.sh ~/.cache/readiness-test/my-app
+bash plugins/kairos/skills/kairos/scripts/php-coverage.sh ~/.cache/kairos/my-app
 ```
 
 ## Safety model
@@ -87,15 +89,15 @@ bash plugins/project-readiness-test/skills/project-readiness-test/scripts/php-co
 - **No code is uploaded.** Scanners download rule packs and vulnerability databases, but get your code mounted read-only; Semgrep telemetry is off, zizmor runs offline, secrets are redacted in output.
 - **Never a real database.** Tests use sqlite in memory or a throwaway container with its own name and port.
 - **Production is looked at, not poked:** `GET`/`HEAD`/`OPTIONS` on public URLs only. No logins, no `POST`, no fuzzing.
-- Temporary exports live in `~/.cache/readiness-test/` and are deleted after each scan.
+- Temporary exports live in `~/.cache/kairos/` and are deleted after each scan.
 
 ## Repository layout
 
 ```
 .claude-plugin/marketplace.json                     makes the repo installable
-plugins/project-readiness-test/
+plugins/kairos/
   .claude-plugin/plugin.json                        plugin manifest (version lives here)
-  skills/project-readiness-test/
+  skills/kairos/
     SKILL.md                                        the instructions Claude follows + the scoring rubric
     scripts/scan.sh                                 gitleaks, Semgrep, Trivy, zizmor in Docker
     scripts/summarize.py                            scanner JSON to short markdown
