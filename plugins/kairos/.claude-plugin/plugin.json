@@ -1,7 +1,7 @@
 {
   "name": "kairos",
   "description": "Read-only readiness and security audit for finished projects: tests, real coverage, secret/SAST/dependency/CI scans, live hardening, one weighted score.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "TechnoVizor"
   },

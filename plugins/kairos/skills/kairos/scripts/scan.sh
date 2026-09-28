@@ -7,7 +7,7 @@
 #   --ref    what to scan (default origin/main, falls back to HEAD); scanned from `git archive`,
 #            so uncommitted work and gitignored files are never touched
 #   --out    where JSON/text results go (default $TMPDIR/kairos-scan/<repo>)
-#   --keep   keep the export copy under ~/.cache/kairos/<repo>
+#   --keep   keep the export copy under ~/.cache/kairos/scan-<repo>
 set -euo pipefail
 exec 3>&2  # fd 3 = the terminal, so progress never lands in a tool's redirected output
 
@@ -34,7 +34,7 @@ git -C "$REPO" fetch --quiet origin 2>/dev/null || true
 git -C "$REPO" rev-parse --verify --quiet "$REF" >/dev/null || { echo "ref $REF not found, using HEAD" >&2; REF=HEAD; }
 
 # Docker may only mount paths under $HOME (not /tmp) on some setups, so the export lives there.
-WORK=$HOME/.cache/kairos/$NAME
+WORK=$HOME/.cache/kairos/scan-$NAME
 rm -rf "$WORK"; mkdir -p "$WORK" "$OUT"
 [ "$KEEP" = 1 ] || trap 'rm -rf "$WORK"' EXIT
 git -C "$REPO" archive "$REF" | tar -x -C "$WORK"
@@ -62,7 +62,7 @@ step gitleaks docker run --rm --user "$ME" -v "$REPO":/repo:ro zricethezav/gitle
 
 # shellcheck disable=SC2086  # $packs is a list of flags on purpose
 step semgrep docker run --rm --user "$ME" -e HOME=/tmp -v "$WORK":/src:ro semgrep/semgrep:latest semgrep scan \
-  $packs --metrics=off --json --quiet --exclude node_modules --exclude vendor --exclude '*.min.js' /src \
+  $packs --metrics=off --json --quiet --exclude node_modules --exclude vendor --exclude public/build --exclude public/vendor --exclude public/js/filament --exclude dist --exclude .nuxt --exclude .output --exclude '*.min.js' --exclude '*.bundle.js' /src \
   > "$OUT/semgrep.json" 2> "$OUT/semgrep.log"
 
 step trivy docker run --rm -v kairos-trivy-cache:/root/.cache -v "$WORK":/src:ro aquasec/trivy:latest fs \
@@ -76,4 +76,6 @@ if [ -d "$WORK/.github" ]; then
     > "$OUT/zizmor.txt" 2>&1 || [ $? -ge 10 ] || echo "  (zizmor failed; see $OUT/zizmor.txt)" >&3
 fi
 
-python3 "$HERE/summarize.py" "$OUT"
+# A committed .kairos-baseline.json lists findings the team already reviewed and accepted (see summarize.py).
+BASELINE=(); [ -f "$WORK/.kairos-baseline.json" ] && BASELINE=("$WORK/.kairos-baseline.json")
+python3 "$HERE/summarize.py" "$OUT" "${BASELINE[@]}"

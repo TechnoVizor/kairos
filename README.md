@@ -7,15 +7,15 @@ A [Claude Code](https://code.claude.com) skill that audits a finished project an
 
 It runs the project's own tests, measures *real* test coverage, scans the git history and dependencies,
 reads the security-critical code, checks the live site's hardening and CI setup, and ends with one weighted
-score plus a ranked list of findings. Everything is read-only: it never changes your repo and never uploads your code.
+score, a "Fix first" list and, for every finding, evidence, a fix and an effort estimate. Everything is read-only: it never changes your repo and never uploads your code.
 
 ```
-| Criterion          | Weight | Fact                                              | Score |
-| Tests              |   20   | 304/305 pass, 91.5% line coverage                 |  9.5  |
-| Code security      |   25   | no injection sinks, admin guards checked          |  7.5  |
-| Live hardening     |   15   | no HSTS / CSP / X-Frame-Options on the live site  |  4.0  |
-| ...                |        |                                                   |       |
-                                                                          Total: 7.1 / 10
+| Criterion       | Weight | Score | Basis                                            |
+| Tests           |   20   |  9.5  | 304/305 pass, 91.5% coverage                     |
+| Code security   |   25   |  7.5  | no injection sinks, admin guards read            |
+| Live hardening  |   15   |  2.5  | missing/weak: hsts, csp, frame, nosniff, ...     |
+| ...             |        |       |                                                  |
+                                                    Total: 7.3 / 10
 ```
 
 See a full [sample report](examples/sample-report.md).
@@ -35,6 +35,8 @@ See a full [sample report](examples/sample-report.md).
 
 Secrets are hunted in the **whole git history** with gitleaks (values redacted), not just the working tree.
 A criterion that cannot be audited is dropped and the weights are renormalized.
+Scores are computed by `scripts/score.py` from measured facts with fixed anchors (80% whole-source coverage is a 10;
+a critical package under 50% caps the tests score at 6), so two people get the same number for the same repo.
 
 ## Install
 
@@ -81,7 +83,27 @@ bash plugins/kairos/skills/kairos/scripts/scan.sh ~/repos/my-app
 
 # PHP coverage inside a throwaway image with pcov and GD (pass an export, not a working checkout)
 bash plugins/kairos/skills/kairos/scripts/php-coverage.sh ~/.cache/kairos/my-app
+
+# hardening facts of the live site (GET/HEAD only); prints JSON for the score
+python3 plugins/kairos/skills/kairos/scripts/live.py https://your-site --cors-url https://your-site/api/health
+
+# score from a facts file (start from: score.py --example)
+python3 plugins/kairos/skills/kairos/scripts/score.py facts.json
 ```
+
+### Accepting known findings
+
+Scanners repeat the same false positives. Commit a `.kairos-baseline.json` to the audited repo and they are counted
+separately instead of reappearing as new (a reason is required for every entry):
+
+```json
+{"accepted": [
+  {"tool": "semgrep", "rule": "missing-user", "path": "Dockerfile", "reason": "final stage sets USER"},
+  {"tool": "gitleaks", "path": "docs/*", "reason": "example keys in documentation"}
+]}
+```
+
+Kairos suggests entries but never writes the file itself.
 
 ## Safety model
 
@@ -99,9 +121,13 @@ plugins/kairos/
   .claude-plugin/plugin.json                        plugin manifest (version lives here)
   skills/kairos/
     SKILL.md                                        the instructions Claude follows + the scoring rubric
+    fixes.md                                        ready-made fix recipes for the common findings
     scripts/scan.sh                                 gitleaks, Semgrep, Trivy, zizmor in Docker
-    scripts/summarize.py                            scanner JSON to short markdown
+    scripts/summarize.py                            scanner JSON to short markdown, honors the baseline
+    scripts/live.py                                 hardening facts of a live site (GET/HEAD only)
+    scripts/score.py                                facts to score: validation, anchors, caps, arithmetic
     scripts/php-coverage.sh, php-coverage.Dockerfile
+evals/                                              cold-start checks and the generated vulnerable fixture
 examples/sample-report.md                           what the output looks like
 ```
 
@@ -115,7 +141,8 @@ examples/sample-report.md                           what the output looks like
 ## Contributing
 
 Edit `SKILL.md` for behavior and the scripts for tooling. Keep the skill short, since it is loaded into context.
-Before pushing, run `claude plugin validate .`, then run `scan.sh` on a real repo and compare the counts.
+Before pushing, run `claude plugin validate .` and `python3 .../scripts/score.py --selftest`, then run the
+cold-start checks in [`evals/`](evals/README.md) with a fresh agent and compare with the ground truth.
 Bump `version` in `plugin.json` so installed copies update.
 
 ## License

@@ -18,7 +18,7 @@ if { ls "$DIR"/vite.config.* >/dev/null 2>&1; } && [ ! -f "$DIR/public/build/man
   echo "note: Vite project without public/build/manifest.json; if view tests fail on the manifest, copy the build from a clean checkout at the same commit" >&2
 fi
 
-docker image inspect "$IMG" >/dev/null 2>&1 || docker build -q -t "$IMG" -f "$HERE/php-coverage.Dockerfile" "$HERE" >/dev/null
+docker build -q -t "$IMG" -f "$HERE/php-coverage.Dockerfile" "$HERE" >/dev/null  # layer cache makes this instant when unchanged
 KEY="base64:$(head -c 32 /dev/urandom | base64)"  # throwaway APP_KEY; no .env is copied into the container
 
 docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e COMPOSER_HOME=/tmp/composer -e APP_KEY="$KEY" \
