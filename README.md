@@ -36,14 +36,15 @@ A criterion that cannot be audited is dropped and the weights are renormalized.
 
 ## Install
 
-The repository is a Claude Code plugin marketplace. Colleagues need two commands:
+The repository is a Claude Code plugin marketplace. Two commands:
 
 ```bash
-claude plugin marketplace add <org>/project-readiness-test
+claude plugin marketplace add TechnoVizor/project-readiness-test
 claude plugin install project-readiness-test@project-readiness-test
 ```
 
-For a private GitHub repository, be signed in with `gh auth login` (or have git credentials) first.
+While the repository is private, the owner must add you as a collaborator first, and you need to be signed in
+with `gh auth login` (or have git credentials for GitHub).
 
 No marketplace? Copy the skill folder instead:
 
@@ -114,3 +115,7 @@ examples/sample-report.md                           what the output looks like
 Edit `SKILL.md` for behavior and the scripts for tooling. Keep the skill short, since it is loaded into context.
 Before pushing, run `claude plugin validate .`, then run `scan.sh` on a real repo and compare the counts.
 Bump `version` in `plugin.json` so installed copies update.
+
+## License
+
+[MIT](LICENSE)

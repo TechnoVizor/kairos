@@ -5,5 +5,8 @@
   "author": {
     "name": "TechnoVizor"
   },
+  "homepage": "https://github.com/TechnoVizor/project-readiness-test",
+  "repository": "https://github.com/TechnoVizor/project-readiness-test",
+  "license": "MIT",
   "keywords": ["audit", "security", "code-review", "coverage", "owasp", "laravel", "nextjs", "go"]
 }
