@@ -1,0 +1,14 @@
+{
+  "name": "project-readiness-test",
+  "description": "Read-only readiness and security audit skill for finished projects",
+  "owner": {
+    "name": "TechnoVizor"
+  },
+  "plugins": [
+    {
+      "name": "project-readiness-test",
+      "source": "./plugins/project-readiness-test",
+      "description": "Runs tests, real coverage, gitleaks/Semgrep/Trivy/zizmor and live checks, then scores the project 0-10"
+    }
+  ]
+}
